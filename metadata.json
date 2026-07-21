@@ -1,0 +1,6 @@
+{
+  "name": "Shadow VR",
+  "description": "Convert your phone into a Mixed Reality headset. Visualise your surroundings in 3D stereoscopic view, use hand gesture tracking, manage virtual windows, view media, browse the web, and talk to your Gemini AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,323 @@
+--------- beginning of system
+07-19 19:04:38.386 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 19:10:50.508 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 19:23:28.232 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 19:24:04.979 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 19:26:52.502 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 20:02:17.643 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 20:12:38.473 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 20:22:10.258 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 20:45:51.737 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 20:48:54.331 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+--------- beginning of crash
+07-19 20:51:42.734 E/AndroidRuntime(29362): FATAL EXCEPTION: main
+07-19 20:51:42.734 E/AndroidRuntime(29362): Process: com.shadow.vr, PID: 29362
+07-19 20:51:42.734 E/AndroidRuntime(29362): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:51:42.734 E/AndroidRuntime(29362): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:51:42.734 E/AndroidRuntime(29362): 	... 13 more
+07-19 20:51:48.754 E/AndroidRuntime(30282): FATAL EXCEPTION: main
+07-19 20:51:48.754 E/AndroidRuntime(30282): Process: com.shadow.vr, PID: 30282
+07-19 20:51:48.754 E/AndroidRuntime(30282): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:51:48.754 E/AndroidRuntime(30282): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:51:48.754 E/AndroidRuntime(30282): 	... 13 more
+07-19 20:52:00.099 E/AndroidRuntime(30427): FATAL EXCEPTION: main
+07-19 20:52:00.099 E/AndroidRuntime(30427): Process: com.shadow.vr, PID: 30427
+07-19 20:52:00.099 E/AndroidRuntime(30427): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:52:00.099 E/AndroidRuntime(30427): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:52:00.099 E/AndroidRuntime(30427): 	... 13 more
+07-19 20:52:31.556 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 20:52:36.565 E/AndroidRuntime(32214): FATAL EXCEPTION: main
+07-19 20:52:36.565 E/AndroidRuntime(32214): Process: com.shadow.vr, PID: 32214
+07-19 20:52:36.565 E/AndroidRuntime(32214): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:52:36.565 E/AndroidRuntime(32214): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:52:36.565 E/AndroidRuntime(32214): 	... 13 more
+07-19 20:53:43.165 E/AndroidRuntime( 1136): FATAL EXCEPTION: main
+07-19 20:53:43.165 E/AndroidRuntime( 1136): Process: com.shadow.vr, PID: 1136
+07-19 20:53:43.165 E/AndroidRuntime( 1136): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:53:43.165 E/AndroidRuntime( 1136): 	... 13 more
+07-19 20:53:46.438 E/AndroidRuntime( 1368): FATAL EXCEPTION: main
+07-19 20:53:46.438 E/AndroidRuntime( 1368): Process: com.shadow.vr, PID: 1368
+07-19 20:53:46.438 E/AndroidRuntime( 1368): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:53:46.438 E/AndroidRuntime( 1368): 	... 13 more
+07-19 20:53:50.929 E/AndroidRuntime( 1601): FATAL EXCEPTION: main
+07-19 20:53:50.929 E/AndroidRuntime( 1601): Process: com.shadow.vr, PID: 1601
+07-19 20:53:50.929 E/AndroidRuntime( 1601): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:53:50.929 E/AndroidRuntime( 1601): 	... 13 more
+07-19 20:55:53.864 E/AndroidRuntime( 3171): FATAL EXCEPTION: main
+07-19 20:55:53.864 E/AndroidRuntime( 3171): Process: com.shadow.vr, PID: 3171
+07-19 20:55:53.864 E/AndroidRuntime( 3171): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:55:53.864 E/AndroidRuntime( 3171): 	... 13 more
+07-19 20:55:59.073 E/AndroidRuntime( 3259): FATAL EXCEPTION: main
+07-19 20:55:59.073 E/AndroidRuntime( 3259): Process: com.shadow.vr, PID: 3259
+07-19 20:55:59.073 E/AndroidRuntime( 3259): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:55:59.073 E/AndroidRuntime( 3259): 	... 13 more
+07-19 20:56:04.263 E/AndroidRuntime( 3306): FATAL EXCEPTION: main
+07-19 20:56:04.263 E/AndroidRuntime( 3306): Process: com.shadow.vr, PID: 3306
+07-19 20:56:04.263 E/AndroidRuntime( 3306): java.lang.RuntimeException: Unable to resume activity {com.shadow.vr/com.example.MainActivity}: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5015)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.ActivityThread.handleResumeActivity(ActivityThread.java:5048)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.servertransaction.ResumeActivityItem.execute(ResumeActivityItem.java:54)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.servertransaction.ActivityTransactionItem.execute(ActivityTransactionItem.java:45)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.servertransaction.TransactionExecutor.executeLifecycleState(TransactionExecutor.java:176)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:97)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2427)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.os.Handler.dispatchMessage(Handler.java:106)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.os.Looper.loopOnce(Looper.java:211)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.os.Looper.loop(Looper.java:300)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.ActivityThread.main(ActivityThread.java:8232)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at java.lang.reflect.Method.invoke(Native Method)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1028)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): Caused by: kotlin.UninitializedPropertyAccessException: lateinit property vrViewModel has not been initialized
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at com.example.MainActivity.onResume(MainActivity.kt:140)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.Instrumentation.callActivityOnResume(Instrumentation.java:1584)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.Activity.performResume(Activity.java:8675)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	at android.app.ActivityThread.performResumeActivity(ActivityThread.java:5004)
+07-19 20:56:04.263 E/AndroidRuntime( 3306): 	... 13 more
+07-19 21:01:36.941 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 21:05:05.900 E/ActivityManager( 1572): Cancel pending or running compactions as system is awake
+07-19 21:06:59.950 E/AndroidRuntime(12826): FATAL EXCEPTION: main
+07-19 21:06:59.950 E/AndroidRuntime(12826): Process: com.shadow.vr, PID: 12826
+07-19 21:06:59.950 E/AndroidRuntime(12826): java.lang.IllegalStateException: Room cannot verify the data integrity. Looks like you've changed schema but forgot to update the version number. You can simply fix this by increasing the version number. Expected identity hash: 09e24f28d2cba97f7d0e4083542e4087, found: fa1c062e0a0cc47a567a8b1fb2ae110b
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.BaseRoomConnectionManager.checkIdentity(RoomConnectionManager.kt:288)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.BaseRoomConnectionManager.onOpen(RoomConnectionManager.kt:267)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.RoomConnectionManager$SupportOpenHelperCallback.onOpen(RoomConnectionManager.android.kt:164)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.onOpen(FrameworkSQLiteOpenHelper.android.kt:279)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:427)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:316)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getWritableOrReadableDatabase(FrameworkSQLiteOpenHelper.android.kt:224)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.innerGetDatabase(FrameworkSQLiteOpenHelper.android.kt:180)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getSupportDatabase(FrameworkSQLiteOpenHelper.android.kt:141)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper.getWritableDatabase(FrameworkSQLiteOpenHelper.android.kt:96)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.driver.SupportSQLiteDriver.open(SupportSQLiteDriver.android.kt:26)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.driver.SupportSQLiteConnectionPool.getSupportConnection(SupportSQLiteConnectionPool.android.kt:35)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.driver.SupportSQLiteConnectionPool.useConnection(SupportSQLiteConnectionPool.android.kt:42)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.RoomConnectionManager.useConnection(RoomConnectionManager.android.kt:126)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.RoomDatabase.useConnection$room_runtime_release(RoomDatabase.android.kt:588)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.TriggerBasedInvalidationTracker.syncTriggers$room_runtime_release(InvalidationTracker.kt:300)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at androidx.room.TriggerBasedInvalidationTracker$createFlow$1$1.invokeSuspend(InvalidationTracker.kt:233)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	at java.lang.Thread.run(Thread.java:1572)
+07-19 21:06:59.950 E/AndroidRuntime(12826): 	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [StandaloneCoroutine{Cancelling}@ccb1256, Dispatchers.Main.immediate]
+07-19 21:07:50.160 E/AndroidRuntime(13513): FATAL EXCEPTION: main
+07-19 21:07:50.160 E/AndroidRuntime(13513): Process: com.shadow.vr, PID: 13513
+07-19 21:07:50.160 E/AndroidRuntime(13513): java.lang.IllegalStateException: Room cannot verify the data integrity. Looks like you've changed schema but forgot to update the version number. You can simply fix this by increasing the version number. Expected identity hash: 09e24f28d2cba97f7d0e4083542e4087, found: fa1c062e0a0cc47a567a8b1fb2ae110b
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.BaseRoomConnectionManager.checkIdentity(RoomConnectionManager.kt:288)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.BaseRoomConnectionManager.onOpen(RoomConnectionManager.kt:267)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.RoomConnectionManager$SupportOpenHelperCallback.onOpen(RoomConnectionManager.android.kt:164)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.onOpen(FrameworkSQLiteOpenHelper.android.kt:279)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:427)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:316)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getWritableOrReadableDatabase(FrameworkSQLiteOpenHelper.android.kt:224)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.innerGetDatabase(FrameworkSQLiteOpenHelper.android.kt:180)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getSupportDatabase(FrameworkSQLiteOpenHelper.android.kt:141)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper.getWritableDatabase(FrameworkSQLiteOpenHelper.android.kt:96)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.driver.SupportSQLiteDriver.open(SupportSQLiteDriver.android.kt:26)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.driver.SupportSQLiteConnectionPool.getSupportConnection(SupportSQLiteConnectionPool.android.kt:35)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.driver.SupportSQLiteConnectionPool.useConnection(SupportSQLiteConnectionPool.android.kt:42)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.RoomConnectionManager.useConnection(RoomConnectionManager.android.kt:126)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.RoomDatabase.useConnection$room_runtime_release(RoomDatabase.android.kt:588)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.TriggerBasedInvalidationTracker.syncTriggers$room_runtime_release(InvalidationTracker.kt:300)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at androidx.room.TriggerBasedInvalidationTracker$createFlow$1$1.invokeSuspend(InvalidationTracker.kt:233)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	at java.lang.Thread.run(Thread.java:1572)
+07-19 21:07:50.160 E/AndroidRuntime(13513): 	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [StandaloneCoroutine{Cancelling}@64d3666, Dispatchers.Main.immediate]
+07-19 21:08:00.036 E/AndroidRuntime(14307): FATAL EXCEPTION: main
+07-19 21:08:00.036 E/AndroidRuntime(14307): Process: com.shadow.vr, PID: 14307
+07-19 21:08:00.036 E/AndroidRuntime(14307): java.lang.IllegalStateException: Room cannot verify the data integrity. Looks like you've changed schema but forgot to update the version number. You can simply fix this by increasing the version number. Expected identity hash: 09e24f28d2cba97f7d0e4083542e4087, found: fa1c062e0a0cc47a567a8b1fb2ae110b
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.BaseRoomConnectionManager.checkIdentity(RoomConnectionManager.kt:288)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.BaseRoomConnectionManager.onOpen(RoomConnectionManager.kt:267)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.RoomConnectionManager$SupportOpenHelperCallback.onOpen(RoomConnectionManager.android.kt:164)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.onOpen(FrameworkSQLiteOpenHelper.android.kt:279)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at android.database.sqlite.SQLiteOpenHelper.getDatabaseLocked(SQLiteOpenHelper.java:427)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at android.database.sqlite.SQLiteOpenHelper.getWritableDatabase(SQLiteOpenHelper.java:316)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getWritableOrReadableDatabase(FrameworkSQLiteOpenHelper.android.kt:224)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.innerGetDatabase(FrameworkSQLiteOpenHelper.android.kt:180)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper$OpenHelper.getSupportDatabase(FrameworkSQLiteOpenHelper.android.kt:141)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.sqlite.db.framework.FrameworkSQLiteOpenHelper.getWritableDatabase(FrameworkSQLiteOpenHelper.android.kt:96)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.driver.SupportSQLiteDriver.open(SupportSQLiteDriver.android.kt:26)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.driver.SupportSQLiteConnectionPool.getSupportConnection(SupportSQLiteConnectionPool.android.kt:35)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.driver.SupportSQLiteConnectionPool.useConnection(SupportSQLiteConnectionPool.android.kt:42)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.RoomConnectionManager.useConnection(RoomConnectionManager.android.kt:126)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.RoomDatabase.useConnection$room_runtime_release(RoomDatabase.android.kt:588)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.TriggerBasedInvalidationTracker.syncTriggers$room_runtime_release(InvalidationTracker.kt:300)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at androidx.room.TriggerBasedInvalidationTracker$createFlow$1$1.invokeSuspend(InvalidationTracker.kt:233)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	at java.lang.Thread.run(Thread.java:1572)
+07-19 21:08:00.036 E/AndroidRuntime(14307): 	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [StandaloneCoroutine{Cancelling}@bfc4df5, Dispatchers.Main.immediate]
