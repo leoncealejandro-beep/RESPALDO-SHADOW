@@ -16,13 +16,18 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.ByteArrayOutputStream
 import java.util.Locale
+import kotlin.math.acos
 import kotlin.math.sqrt
 
-// Sacamos las clases al nivel superior para que sean accesibles por RenderHandSkeletons
+// ============================================================================
+// CONTRATO OBLIGATORIO: Clases de datos
+// ============================================================================
+
 data class Joint(val x: Float, val y: Float, val z: Float)
 
 data class HandData(
@@ -30,18 +35,29 @@ data class HandData(
     val joints: List<Joint>,
     val gesture: HandTracker.GestureType,
     val pinchStrength: Float,
-    val x: Float, // Coordenada X normalizada 0..1 (mapeada a pantalla)
-    val y: Float  // Coordenada Y normalizada 0..1 (mapeada a pantalla)
+    val x: Float,
+    val y: Float,
+    val menuVisible: Boolean,
+    val menuAnchorX: Float,
+    val menuAnchorY: Float,
+    val menuAnchorZ: Float
 )
 
 class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
 
     private val TAG = "HandTracker"
 
+    // CONTRATO: GestureType debe contener exactamente estos valores
     enum class GestureType {
-        NONE, OPEN_HAND, CLOSED_HAND, PINCH, POINTING
+        NONE,
+        OPEN_HAND,
+        CLOSED_HAND,
+        PINCH,
+        POINTING,
+        MENU
     }
 
+    // CONTRATO: HandState debe contener exactamente estas propiedades
     data class HandState(
         val isDetected: Boolean = false,
         val x: Float = 0.5f,
@@ -60,7 +76,8 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
     @Volatile private var latestSensorH = 0
     @Volatile private var latestRotation = 0
 
-    private val smoothingAlpha = 0.8f 
+    // Suavizado (interpolación) para evitar vibraciones
+    private val smoothingAlpha = 0.75f 
     private val leftJointsBuffer = FloatArray(63)
     private val rightJointsBuffer = FloatArray(63)
     private val prevLeftJoints = FloatArray(63)
@@ -68,7 +85,98 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
     
     private var hasPrevLeft = false
     private var hasPrevRight = false
+    
+    private var prevSmoothX = 0.5f
+    private var prevSmoothY = 0.5f
+    private var isHandCurrentlyDetected = false
+
     @Volatile private var isProcessing = false
+
+    // ========================================================================
+    // MATEMÁTICAS 3D REUTILIZABLES (Para orientación y gestos invariantes)
+    // ========================================================================
+    
+    data class Vec3(val x: Float, val y: Float, val z: Float) {
+        operator fun minus(other: Vec3) = Vec3(x - other.x, y - other.y, z - other.z)
+        operator fun plus(other: Vec3) = Vec3(x + other.x, y + other.y, z + other.z)
+        operator fun times(scalar: Float) = Vec3(x * scalar, y * scalar, z * scalar)
+        
+        fun dot(other: Vec3): Float = x * other.x + y * other.y + z * other.z
+        
+        fun cross(other: Vec3): Vec3 = Vec3(
+            y * other.z - z * other.y,
+            z * other.x - x * other.z,
+            x * other.y - y * other.x
+        )
+        
+        fun length(): Float = sqrt(x * x + y * y + z * z)
+        
+        fun normalize(): Vec3 {
+            val len = length()
+            return if (len > 1e-6f) Vec3(x / len, y / len, z / len) else Vec3(0f, 0f, 0f)
+        }
+    }
+
+    fun angleBetween(a: Vec3, b: Vec3): Float {
+        val dot = a.normalize().dot(b.normalize())
+        return acos(dot.coerceIn(-1f, 1f))
+    }
+
+    // ========================================================================
+    // ESTABILIDAD: Histéresis
+    // ========================================================================
+    
+    private class GestureHysteresis {
+        var activeGesture: GestureType = GestureType.NONE
+        private var rawGesture: GestureType = GestureType.NONE
+        private var rawGestureStartMs = 0L
+        private var gestureLostMs = 0L
+
+        fun update(detected: GestureType, now: Long): GestureType {
+            if (detected != GestureType.NONE) {
+                if (detected == rawGesture) {
+                    // Mantener durante 150 ms antes de activarse
+                    if (now - rawGestureStartMs >= 150L) {
+                        activeGesture = detected
+                    }
+                } else {
+                    rawGesture = detected
+                    rawGestureStartMs = now
+                }
+                gestureLostMs = 0L // Resetear tiempo de pérdida si se detecta algo
+            } else {
+                // Debe mantenerse perdido durante 100 ms antes de desactivarse
+                if (activeGesture != GestureType.NONE) {
+                    if (gestureLostMs == 0L) gestureLostMs = now
+                    if (now - gestureLostMs >= 100L) {
+                        activeGesture = GestureType.NONE
+                        gestureLostMs = 0L
+                        rawGesture = GestureType.NONE
+                    }
+                }
+            }
+            
+            // Si el gesto detectado coincide con el activo, estabilizamos
+            if (detected == activeGesture) {
+                gestureLostMs = 0L
+            }
+            
+            return activeGesture
+        }
+
+        fun reset() {
+            activeGesture = GestureType.NONE
+            rawGesture = GestureType.NONE
+            rawGestureStartMs = 0L
+            gestureLostMs = 0L
+        }
+    }
+    
+    private val hysteresis = GestureHysteresis()
+
+    // ========================================================================
+    // INICIALIZACIÓN
+    // ========================================================================
 
     init {
         try {
@@ -98,6 +206,10 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             Log.e(TAG, "Error iniciando HandLandmarker", e)
         }
     }
+
+    // ========================================================================
+    // ANÁLISIS DE IMAGEN
+    // ========================================================================
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
@@ -129,20 +241,37 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
         }
     }
 
+    // ========================================================================
+    // PROCESAMIENTO DE RESULTADOS
+    // ========================================================================
+
     private fun processResultFast(result: HandLandmarkerResult) {
         val landmarksList = result.landmarks()
+        val now = System.currentTimeMillis()
         
         if (landmarksList.isEmpty()) {
             hasPrevLeft = false
             hasPrevRight = false
-            _handState.value = HandState(isDetected = false, hands = emptyList())
+            isHandCurrentlyDetected = false
+            
+            // Alimentar NONE a la histéresis para manejar la desactivación retardada
+            val stableGesture = hysteresis.update(GestureType.NONE, now)
+            
+            _handState.value = HandState(
+                isDetected = false, 
+                gesture = stableGesture,
+                hands = emptyList()
+            )
             return
         }
 
+        isHandCurrentlyDetected = true
         val handsData = mutableListOf<HandData>()
         val metrics = context.resources.displayMetrics
         val screenW = metrics.widthPixels.toFloat()
         val screenH = metrics.heightPixels.toFloat()
+
+        var primaryHandData: HandData? = null
 
         for (i in landmarksList.indices) {
             val handLandmarks = landmarksList[i]
@@ -152,6 +281,7 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             val prevBuffer = if (isLeft) prevLeftJoints else prevRightJoints
             val hasPrev = if (isLeft) hasPrevLeft else hasPrevRight
 
+            // 1. Suavizado de joints (interpolación)
             for (j in 0 until 21) {
                 val lm = handLandmarks[j]
                 val idx = j * 3
@@ -168,48 +298,48 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             if (isLeft) hasPrevLeft = true else hasPrevRight = true
             currentBuffer.copyInto(prevBuffer)
 
-            // Cálculo Gestos
-            val tx = currentBuffer[4*3]; val ty = currentBuffer[4*3+1]
-            val ix = currentBuffer[8*3]; val iy = currentBuffer[8*3+1]
-            
-            val dx = tx - ix; val dy = ty - iy
-            val distSq = dx*dx + dy*dy
-            val isPinch = distSq < 0.0025f 
-            
-            var gesture = GestureType.OPEN_HAND
-            var pinchVal = 0f
+            // 2. Conversión a Vec3 para matemáticas 3D robustas
+            val landmarks3D = (0 until 21).map { 
+                val idx = it * 3
+                Vec3(currentBuffer[idx], currentBuffer[idx + 1], currentBuffer[idx + 2])
+            }
 
-            if (isPinch) {
-                gesture = GestureType.PINCH
-                pinchVal = (1f - (sqrt(distSq) - 0.04f) / 0.12f).coerceIn(0f, 1f)
+            // 3. Detección de gestos usando orientación de la palma y vectores 3D
+            val gestureResult = detectGesture3D(landmarks3D)
+            val rawGesture = gestureResult.first
+            val pinchVal = gestureResult.second
+
+            // 4. Aplicar histéresis al gesto de la mano primaria (la primera detectada)
+            val stableGesture = if (i == 0) {
+                hysteresis.update(rawGesture, now)
             } else {
-                fun isExtended(tipIdx: Int, mcpIdx: Int): Boolean {
-                    val tIdx = tipIdx * 3; val mIdx = mcpIdx * 3
-                    val wx = currentBuffer[0]; val wy = currentBuffer[1]
-                    val distTip = (currentBuffer[tIdx]-wx).let { it*it } + (currentBuffer[tIdx+1]-wy).let { it*it }
-                    val distMcp = (currentBuffer[mIdx]-wx).let { it*it } + (currentBuffer[mIdx+1]-wy).let { it*it }
-                    return distTip > distMcp * 1.5f
-                }
-                val indexExt = isExtended(8, 5)
-                val middleExt = isExtended(12, 9)
-                
-                if (indexExt && !middleExt) gesture = GestureType.POINTING
-                else if (!indexExt && !middleExt && !isExtended(16, 13) && !isExtended(20, 17)) gesture = GestureType.CLOSED_HAND
+                rawGesture // Para manos secundarias, usamos el gesto crudo o podríamos tener otra histéresis
             }
 
-            val joints = mutableListOf<Joint>()
-            for (j in 0 until 21) {
-                val idx = j * 3
-                joints.add(Joint(currentBuffer[idx], currentBuffer[idx+1], currentBuffer[idx+2]))
+            // 5. Cálculo de posición y anclaje del menú
+            var menuVisible = false
+            var menuAnchorX = 0f
+            var menuAnchorY = 0f
+            var menuAnchorZ = 0f
+
+            if (stableGesture == GestureType.MENU) {
+                menuVisible = true
+                // Punto medio entre Landmark 4 (pulgar) y Landmark 8 (índice)
+                val lm4 = landmarks3D[4]
+                val lm8 = landmarks3D[8]
+                menuAnchorX = (lm4.x + lm8.x) / 2f
+                menuAnchorY = (lm4.y + lm8.y) / 2f
+                menuAnchorZ = (lm4.z + lm8.z) / 2f
             }
 
-            val targetIdx = if (gesture == GestureType.PINCH) -1 else 8
+            // 6. Mapeo de coordenadas a pantalla
+            val targetIdx = if (stableGesture == GestureType.PINCH || stableGesture == GestureType.MENU) -1 else 8
             var finalX: Float
             var finalY: Float
             
             if (targetIdx == -1) {
-                finalX = (tx + ix) / 2f
-                finalY = (ty + iy) / 2f
+                finalX = (currentBuffer[4 * 3] + currentBuffer[8 * 3]) / 2f
+                finalY = (currentBuffer[4 * 3 + 1] + currentBuffer[8 * 3 + 1]) / 2f
             } else {
                 finalX = currentBuffer[targetIdx * 3]
                 finalY = currentBuffer[targetIdx * 3 + 1]
@@ -217,28 +347,136 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
 
             val mapped = mapCoordsFast(finalX, finalY, latestSensorW, latestSensorH, latestRotation, screenW, screenH)
             
-            handsData.add(
-                HandData(
-                    isLeft = isLeft,
-                    joints = joints,
-                    gesture = gesture,
-                    pinchStrength = pinchVal,
-                    x = mapped.first,
-                    y = mapped.second
-                )
+            // Suavizado de la posición final para evitar vibraciones
+            val smoothX = if (!isHandCurrentlyDetected) mapped.first else smoothingAlpha * mapped.first + (1f - smoothingAlpha) * prevSmoothX
+            val smoothY = if (!isHandCurrentlyDetected) mapped.second else smoothingAlpha * mapped.second + (1f - smoothingAlpha) * prevSmoothY
+            prevSmoothX = smoothX
+            prevSmoothY = smoothY
+
+            val joints = (0 until 21).map { 
+                val idx = it * 3
+                Joint(currentBuffer[idx], currentBuffer[idx + 1], currentBuffer[idx + 2])
+            }
+
+            val handData = HandData(
+                isLeft = isLeft,
+                joints = joints,
+                gesture = stableGesture,
+                pinchStrength = pinchVal,
+                x = smoothX,
+                y = smoothY,
+                menuVisible = menuVisible,
+                menuAnchorX = menuAnchorX,
+                menuAnchorY = menuAnchorY,
+                menuAnchorZ = menuAnchorZ
             )
+            
+            handsData.add(handData)
+            
+            if (i == 0) {
+                primaryHandData = handData
+            }
         }
 
-        val primaryHand = handsData.first()
+        // 7. Actualizar estado global
+        val primary = primaryHandData ?: HandData(
+            isLeft = false,
+            joints = emptyList(),
+            gesture = GestureType.NONE,
+            pinchStrength = 0f,
+            x = 0.5f,
+            y = 0.5f,
+            menuVisible = false,
+            menuAnchorX = 0f,
+            menuAnchorY = 0f,
+            menuAnchorZ = 0f
+        )
+
         _handState.value = HandState(
             isDetected = true,
-            x = primaryHand.x,
-            y = primaryHand.y,
-            gesture = primaryHand.gesture,
-            pinchStrength = primaryHand.pinchStrength,
+            x = primary.x,
+            y = primary.y,
+            gesture = primary.gesture,
+            pinchStrength = primary.pinchStrength,
             hands = handsData
         )
     }
+
+    // ========================================================================
+    // LÓGICA DE GESTOS 3D (Invatante a rotación y ángulo de visión)
+    // ========================================================================
+
+    private fun detectGesture3D(l: List<Vec3>): Pair<GestureType, Float> {
+        val wrist = l[0]
+        
+        // Orientación de la palma: normal al plano formado por muñeca, MCP índice (5), MCP meñique (17)
+        // Esto establece un sistema de coordenadas local relativo a la mano, no a la pantalla.
+        val vWristToIndexMcp = l[5] - wrist
+        val vWristToPinkyMcp = l[17] - wrist
+        val palmNormal = vWristToIndexMcp.cross(vWristToPinkyMcp).normalize()
+
+        // Función reutilizable para verificar extensión de un dedo usando geometría 3D
+        fun isExtended(mcpIdx: Int, tipIdx: Int): Boolean {
+            val vMcp = l[mcpIdx] - wrist
+            val vTip = l[tipIdx] - wrist
+            val lenMcp = vMcp.length()
+            val lenTip = vTip.length()
+            
+            if (lenMcp < 1e-5f) return false
+            
+            // El producto punto entre los vectores normalizados nos da el coseno del ángulo.
+            // Si el dedo está extendido, apunta en la misma dirección general que el vector hacia el MCP.
+            val dot = vMcp.normalize().dot(vTip.normalize())
+            
+            // Criterios robustos invariantes a la rotación:
+            // 1. La punta está significativamente más lejos de la muñeca que el MCP.
+            // 2. El ángulo entre el vector del MCP y el de la punta es menor a ~60 grados (cos > 0.5).
+            return lenTip > lenMcp * 1.15f && dot > 0.5f
+        }
+
+        // Evaluación de cada dedo
+        val thumbExt = isExtended(2, 4)
+        val indexExt = isExtended(5, 8)
+        val middleExt = isExtended(9, 12)
+        val ringExt = isExtended(13, 16)
+        val pinkyExt = isExtended(17, 20)
+
+        // Cálculo de fuerza de pellizco (PINCH)
+        val distThumbIndex = (l[4] - l[8]).length()
+        val pinchStrength = (1f - (distThumbIndex - 0.02f) / 0.08f).coerceIn(0f, 1f)
+        val isPinch = distThumbIndex < 0.06f
+
+        if (isPinch) {
+            return Pair(GestureType.PINCH, pinchStrength)
+        }
+
+        // GESTO MENU (Pistola): Pulgar e índice extendidos, medio, anular y meñique doblados.
+        // Al usar vectores relativos a la muñeca y la normal de la palma, esto funciona desde cualquier ángulo visible.
+        if (thumbExt && indexExt && !middleExt && !ringExt && !pinkyExt) {
+            return Pair(GestureType.MENU, 0f)
+        }
+
+        // POINTING: Solo índice extendido
+        if (indexExt && !middleExt && !ringExt && !pinkyExt) {
+            return Pair(GestureType.POINTING, 0f)
+        }
+
+        // CLOSED_HAND: Ningún dedo extendido
+        if (!thumbExt && !indexExt && !middleExt && !ringExt && !pinkyExt) {
+            return Pair(GestureType.CLOSED_HAND, 0f)
+        }
+
+        // OPEN_HAND: Todos los dedos principales extendidos
+        if (indexExt && middleExt && ringExt && pinkyExt) {
+            return Pair(GestureType.OPEN_HAND, 0f)
+        }
+
+        return Pair(GestureType.NONE, 0f)
+    }
+
+    // ========================================================================
+    // UTILIDADES
+    // ========================================================================
 
     private fun mapCoordsFast(sx: Float, sy: Float, sW: Int, sH: Int, rot: Int, scW: Float, scH: Float): Pair<Float, Float> {
         var rx = sx

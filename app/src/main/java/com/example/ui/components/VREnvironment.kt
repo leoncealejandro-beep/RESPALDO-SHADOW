@@ -3,6 +3,12 @@ package com.example.ui.components
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.view.MotionEvent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -370,6 +376,47 @@ fun VREnvironment(
                             )
                         }
                     }
+                }
+            }
+        }
+
+        // ==========================================
+        // MENÚ VR - Controlado únicamente por gesto
+        // ==========================================
+        val isMenuGesture = gesture.toString().uppercase() == "MENU"
+        val activeHand = handState.hands.firstOrNull()
+
+        AnimatedVisibility(
+            visible = isMenuGesture && activeHand != null,
+            enter = fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.9f, animationSpec = tween(300)),
+            exit = fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+        ) {
+            val anchorX = activeHand?.menuAnchorX ?: 0.5f
+            val anchorY = activeHand?.menuAnchorY ?: 0.5f
+            
+            val posX = anchorX * vw
+            val posY = anchorY * vh
+            
+            Box(
+                modifier = Modifier
+                    .offset(x = posX.dp, y = (posY - 150).dp)
+                    .zIndex(100f)
+                    .background(Color.Black.copy(alpha = 0.85f), RoundedCornerShape(16.dp))
+                    .border(1.5.dp, Color(0xFF00FFCC), RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+                    .width(200.dp)
+                    .height(250.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("MENÚ VR", color = Color(0xFF00FFCC), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    HorizontalDivider(color = Color(0xFF00FFCC).copy(alpha = 0.3f))
+                    Text("Inicio", color = Color.White, fontSize = 14.sp)
+                    Text("Configuración", color = Color.White, fontSize = 14.sp)
+                    Text("Cerrar", color = Color.Red.copy(alpha = 0.8f), fontSize = 14.sp)
                 }
             }
         }
