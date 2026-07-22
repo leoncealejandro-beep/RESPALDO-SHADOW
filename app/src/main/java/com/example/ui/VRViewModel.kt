@@ -1,6 +1,7 @@
 package com.example.ui
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
@@ -18,11 +19,27 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.PI
+
+data class LensConfig(
+    val ipd: Float = 64f,
+    val leftScaleX: Float = 1.0f,
+    val leftScaleY: Float = 1.0f,
+    val rightScaleX: Float = 1.0f,
+    val rightScaleY: Float = 1.0f,
+    val leftOffsetX: Float = 0f,
+    val leftOffsetY: Float = 0f,
+    val rightOffsetX: Float = 0f,
+    val rightOffsetY: Float = 0f,
+    val horizontalRotation: Float = 0f,
+    val verticalRotation: Float = 0f,
+    val distortionIntensity: Float = 1.0f
+)
 
 class VRViewModel(application: Application) : AndroidViewModel(application), TextToSpeech.OnInitListener {
 
@@ -53,7 +70,7 @@ class VRViewModel(application: Application) : AndroidViewModel(application), Tex
     val grabbedWindowId: StateFlow<String?> = _grabbedWindowId.asStateFlow()
 
     // ========================================================================
-    // NUEVOS ESTADOS PARA MODO EDITOR (Integrados)
+    // MODO EDITOR
     // ========================================================================
     private val _isEditorMode = MutableStateFlow(false)
     val isEditorMode: StateFlow<Boolean> = _isEditorMode.asStateFlow()
@@ -62,11 +79,36 @@ class VRViewModel(application: Application) : AndroidViewModel(application), Tex
     val selectedWindowId: StateFlow<String?> = _selectedWindowId.asStateFlow()
 
     // ---------- System settings ----------
-    val ipd = MutableStateFlow(64f)
-    val lensCorrection = MutableStateFlow(1.0f)
-    val backgroundCameraEnabled = MutableStateFlow(true)
-    val visualTheme = MutableStateFlow("glassmorphic")
-    val handStyle = MutableStateFlow("holographic")
+    // CORRECCIÓN ARQUITECTÓNICA: LensConfig es ahora la única fuente de verdad.
+    // Estos StateFlows son de solo lectura y se derivan directamente de _lensConfig 
+    // para evitar divergencia de estados e incompatibilidades con VRConfigActivity.
+    // ---------- Lens Configuration ----------
+private val _lensConfig = MutableStateFlow(LensConfig())
+
+val lensConfig: StateFlow<LensConfig> = _lensConfig.asStateFlow()
+
+// ---------- System settings ----------
+val ipd: StateFlow<Float> =
+    _lensConfig
+        .map { it.ipd }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            64f
+        )
+
+val lensCorrection: StateFlow<Float> =
+    _lensConfig
+        .map { it.distortionIntensity }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            1.0f
+        )
+
+val backgroundCameraEnabled = MutableStateFlow(true)
+val visualTheme = MutableStateFlow("glassmorphic")
+val handStyle = MutableStateFlow("holographic")
 
     // ---------- Browser ----------
     val currentUrl = MutableStateFlow("https://www.google.com")
@@ -169,6 +211,10 @@ class VRViewModel(application: Application) : AndroidViewModel(application), Tex
 
         setupVirtualFileSystem()
         loadInstalledApps()
+        
+        // CORRECCIÓN: Carga síncrona para evitar condiciones de carrera al iniciar la UI
+        loadLensConfiguration()
+        
         addNotification("System", "Welcome to Shadow VR. Look around and pinch to interact.", "System")
 
         viewModelScope.launch {
@@ -201,13 +247,120 @@ class VRViewModel(application: Application) : AndroidViewModel(application), Tex
     }
 
     // ========================================================================
-    // LÓGICA DEL MODO EDITOR (Nueva integración)
+    // LENS CONFIGURATION SYSTEM (API Clara para VRConfigActivity)
+    // ========================================================================
+
+    fun updateIPD(newIpd: Float) {
+        val clampedIpd = newIpd.coerceIn(45f, 75f)
+        // CORRECCIÓN: Única fuente de verdad es _lensConfig
+        _lensConfig.update { it.copy(ipd = clampedIpd) }
+    }
+
+    fun updateLeftLens(scaleX: Float, scaleY: Float, offsetX: Float, offsetY: Float) {
+        _lensConfig.update { 
+            it.copy(
+                leftScaleX = scaleX,
+                leftScaleY = scaleY,
+                leftOffsetX = offsetX,
+                leftOffsetY = offsetY
+            )
+        }
+    }
+
+    fun updateRightLens(scaleX: Float, scaleY: Float, offsetX: Float, offsetY: Float) {
+        _lensConfig.update { 
+            it.copy(
+                rightScaleX = scaleX,
+                rightScaleY = scaleY,
+                rightOffsetX = offsetX,
+                rightOffsetY = offsetY
+            )
+        }
+    }
+
+    fun updateLensRotation(horizontal: Float, vertical: Float) {
+        _lensConfig.update {
+            it.copy(
+                horizontalRotation = horizontal,
+                verticalRotation = vertical
+            )
+        }
+    }
+
+    fun updateDistortion(intensity: Float) {
+        val clamped = intensity.coerceIn(0.5f, 2.0f)
+        // CORRECCIÓN: Única fuente de verdad es _lensConfig
+        _lensConfig.update { it.copy(distortionIntensity = clamped) }
+    }
+
+    fun resetLensConfiguration() {
+        val default = LensConfig()
+        _lensConfig.value = default
+        
+        val prefs = context.getSharedPreferences("shadow_vr_lens_prefs", Context.MODE_PRIVATE)
+        prefs.edit().clear().apply()
+    }
+
+fun setLensCorrection(value: Float) {
+    _lensConfig.update { current ->
+        current.copy(
+            distortionIntensity = value.coerceIn(0.5f, 2.0f)
+        )
+    }
+}
+
+
+    // CORRECCIÓN: Ejecución síncrona con apply() para garantizar persistencia 
+    // incluso si VRConfigActivity se destruye inmediatamente después de llamar a este método.
+    fun saveLensConfiguration() {
+        val prefs = context.getSharedPreferences("shadow_vr_lens_prefs", Context.MODE_PRIVATE)
+        val config = _lensConfig.value
+        prefs.edit().apply {
+            putFloat("lens_ipd", config.ipd)
+            putFloat("lens_left_scale_x", config.leftScaleX)
+            putFloat("lens_left_scale_y", config.leftScaleY)
+            putFloat("lens_right_scale_x", config.rightScaleX)
+            putFloat("lens_right_scale_y", config.rightScaleY)
+            putFloat("lens_left_offset_x", config.leftOffsetX)
+            putFloat("lens_left_offset_y", config.leftOffsetY)
+            putFloat("lens_right_offset_x", config.rightOffsetX)
+            putFloat("lens_right_offset_y", config.rightOffsetY)
+            putFloat("lens_horizontal_rotation", config.horizontalRotation)
+            putFloat("lens_vertical_rotation", config.verticalRotation)
+            putFloat("lens_distortion_intensity", config.distortionIntensity)
+            apply()
+        }
+    }
+
+    // CORRECCIÓN: Carga síncrona para asegurar que la configuración esté disponible 
+    // antes de que cualquier componente de UI intente leerla.
+    private fun loadLensConfiguration() {
+        val prefs = context.getSharedPreferences("shadow_vr_lens_prefs", Context.MODE_PRIVATE)
+        val config = LensConfig(
+            ipd = prefs.getFloat("lens_ipd", 64f).coerceIn(45f, 75f),
+            leftScaleX = prefs.getFloat("lens_left_scale_x", 1.0f),
+            leftScaleY = prefs.getFloat("lens_left_scale_y", 1.0f),
+            rightScaleX = prefs.getFloat("lens_right_scale_x", 1.0f),
+            rightScaleY = prefs.getFloat("lens_right_scale_y", 1.0f),
+            leftOffsetX = prefs.getFloat("lens_left_offset_x", 0f),
+            leftOffsetY = prefs.getFloat("lens_left_offset_y", 0f),
+            rightOffsetX = prefs.getFloat("lens_right_offset_x", 0f),
+            rightOffsetY = prefs.getFloat("lens_right_offset_y", 0f),
+            horizontalRotation = prefs.getFloat("lens_horizontal_rotation", 0f),
+            verticalRotation = prefs.getFloat("lens_vertical_rotation", 0f),
+            distortionIntensity = prefs.getFloat("lens_distortion_intensity", 1.0f).coerceIn(0.5f, 2.0f)
+        )
+        _lensConfig.value = config
+    }
+
+    // ========================================================================
+    // LÓGICA DEL MODO EDITOR
     // ========================================================================
 
     fun setEditorMode(enabled: Boolean) {
         _isEditorMode.value = enabled
         if (!enabled) {
-            _selectedWindowId.value = null // Deseleccionar al salir
+            _selectedWindowId.value = null
         }
     }
 
@@ -220,7 +373,6 @@ class VRViewModel(application: Application) : AndroidViewModel(application), Tex
             val newId = "win_${System.currentTimeMillis()}"
             val count = _windowConfigs.value.size
             
-            // Calcular posición automática frente al usuario
             val (x, y, z) = SpatialRenderer.computeAutoLayoutPosition(
                 _windowConfigs.value.values.toList(), 
                 headOrientation.value.yaw
@@ -231,7 +383,7 @@ class VRViewModel(application: Application) : AndroidViewModel(application), Tex
                 title = "Nueva Ventana ${count + 1}",
                 worldX = x,
                 worldY = y,
-                worldZ = z.coerceIn(1.5f, 3.0f), // Asegurar que esté visible
+                worldZ = z.coerceIn(1.5f, 3.0f),
                 widthMeters = 0.8f,
                 heightMeters = 0.6f,
                 isOpen = true,
@@ -246,11 +398,9 @@ class VRViewModel(application: Application) : AndroidViewModel(application), Tex
 
     fun deleteSelectedWindow() {
         val id = _selectedWindowId.value ?: return
-        if (id == "universal_dock") return // Proteger el dock
+        if (id == "universal_dock") return
         
         viewModelScope.launch {
-            // En tu arquitectura actual, "borrar" suele ser cerrar o eliminar de la DB.
-            // Si quieres borrarlo físicamente de la DB:
             repository.deleteWindowConfig(id) 
             _selectedWindowId.value = null
             speak("Window deleted")

@@ -1564,7 +1564,7 @@ fun SettingsContent(windowId: String, viewModel: VRViewModel) {
             }
             Slider(
                 value = ipdValue,
-                onValueChange = { viewModel.ipd.value = it },
+                onValueChange = { viewModel.updateIPD(it) },
                 valueRange = 55f..75f,
                 colors = SliderDefaults.colors(activeTrackColor = Accent, thumbColor = Accent)
             )
@@ -1585,10 +1585,8 @@ fun SettingsContent(windowId: String, viewModel: VRViewModel) {
                 )
             }
             Slider(
-                value = lensValue,
-                onValueChange = { viewModel.lensCorrection.value = it },
-                valueRange = 0.5f..2.0f,
-                colors = SliderDefaults.colors(activeTrackColor = Accent, thumbColor = Accent)
+    value = lensValue,
+    onValueChange = { viewModel.setLensCorrection(it) },
             )
         }
 

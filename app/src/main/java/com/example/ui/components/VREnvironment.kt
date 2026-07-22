@@ -3,42 +3,51 @@ package com.example.ui.components
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.view.MotionEvent
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.animation.scaleOut
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+
 import androidx.compose.material3.*
+
 import androidx.compose.runtime.*
-import androidx.compose.ui.zIndex
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+
 import com.example.data.VRWindowConfig
 import com.example.data.WindowContentType
 import com.example.spatial.SpatialRenderer
 import com.example.tracking.HandTracker
 import com.example.ui.VRViewModel
+
 import kotlin.math.*
 
 data class WindowProjection(
@@ -68,6 +77,9 @@ fun VREnvironment(
     val selectedId by viewModel.selectedWindowId.collectAsState()
     val actualEditorMode = forceEditorMode || editorModeState
 
+    // Lens configuration from ViewModel (Single source of truth)
+    val lensConfig by viewModel.lensConfig.collectAsState()
+
     var viewportSize by remember { mutableStateOf(IntSize.Zero) }
     val tone = remember { ToneGenerator(AudioManager.STREAM_MUSIC, 100) }
     val view = LocalView.current
@@ -88,6 +100,7 @@ fun VREnvironment(
         if (viewportSize.width == 0) return@Box
         val vw = viewportSize.width.toFloat()
         val vh = viewportSize.height.toFloat()
+        val halfW = vw / 2f
 
         if (cameraActive) {
             CameraPreview(
@@ -201,114 +214,66 @@ fun VREnvironment(
             }
         }
 
-        Box(Modifier.fillMaxSize()) {
-            projections.forEach { proj ->
-                val win = windows[proj.windowId] ?: return@forEach
-                val isHovered = rayHit?.windowId == proj.windowId
-                val isGrabbed = grabbedId == proj.windowId
-                val isSelected = selectedId == proj.windowId
-
-                val borderColor = when {
-                    isSelected && actualEditorMode -> Color(0xFFFFAA00)
-                    isGrabbed -> Color(0xFF00FFCC)
-                    isHovered -> Color(0xFF00FFCC).copy(alpha = 0.6f)
-                    else -> Color.White.copy(alpha = 0.1f)
+        // Render Left Eye
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationX = -lensConfig.ipd / 2f + lensConfig.leftOffsetX
+                    translationY = lensConfig.leftOffsetY
+                    scaleX = lensConfig.leftScaleX
+                    scaleY = lensConfig.leftScaleY
+                    rotationX = lensConfig.verticalRotation
+                    rotationY = lensConfig.horizontalRotation
+                    // Note: lensConfig.distortionIntensity is prepared for future integration with SpatialRenderer
                 }
-                val borderWidth = when {
-                    isSelected && actualEditorMode -> 3.dp
-                    isGrabbed -> 2.dp
-                    isHovered -> 1.5.dp
-                    else -> 1.dp
-                }
-
-                if (proj.windowId == "universal_dock") {
-                    UniversalDock(
-                        viewModel = viewModel,
-                        isMenuOpen = isMenuOpen,
-                        theme = "glassmorphic",
-                        modifier = Modifier
-                            .zIndex(10f)
-                            .offset(
-                                x = (proj.centerX - proj.widthPx / 2f).coerceAtLeast(0f).dp,
-                                y = (proj.centerY - proj.heightPx / 2f).coerceAtLeast(0f).dp
-                            )
-                            .size(
-                                proj.widthPx.coerceIn(280f, 900f).dp,
-                                proj.heightPx.coerceIn(160f, 600f).dp
-                            )
-                            .graphicsLayer {
-                                shadowElevation = (20f / proj.distance).coerceIn(2f, 20f)
-                            }
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .offset(
-                                x = (proj.centerX - proj.widthPx / 2f).coerceAtLeast(0f).dp,
-                                y = (proj.centerY - proj.heightPx / 2f).coerceAtLeast(0f).dp
-                            )
-                            .size(
-                                proj.widthPx.coerceIn(280f, 900f).dp,
-                                proj.heightPx.coerceIn(160f, 600f).dp
-                            )
-                            .graphicsLayer {
-                                shadowElevation = (20f / proj.distance).coerceIn(2f, 20f)
-                            }
-                            .background(
-                                Color.Black.copy(alpha = 0.85f * win.brightness),
-                                RoundedCornerShape(16.dp)
-                            )
-                            .border(
-                                width = borderWidth,
-                                color = borderColor,
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                    ) {
-                        Column(Modifier.fillMaxSize()) {
-                            WindowTitleBar(
-                                title = win.title,
-                                isPinned = win.isPinned,
-                                isHovered = isHovered,
-                                onClose = { if (!actualEditorMode) viewModel.closeWindow(win.id) }
-                            )
-                            Box(
-                                Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-                                    .graphicsLayer { alpha = win.brightness }
-                            ) {
-                                VRWindowContent(
-                                    id = win.internalId.ifEmpty { win.id },
-                                    viewModel = viewModel
-                                )
-                            }
-                        }
-                    }
-                }
+                .clip(RoundedCornerShape(0.dp))
+        ) {
+            Box(Modifier.fillMaxSize().width((vw / 2f).dp)) {
+                renderEyeContent(
+                    projections = projections,
+                    windows = windows,
+                    rayHit = rayHit,
+                    grabbedId = grabbedId,
+                    selectedId = selectedId,
+                    actualEditorMode = actualEditorMode,
+                    isMenuOpen = isMenuOpen,
+                    viewModel = viewModel
+                )
             }
         }
 
-        if (actualEditorMode) {
-            EditorControlPanel(
-                viewModel = viewModel,
-                selectedWindow = windows[selectedId],
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 40.dp)
-            )
-            if (!forceEditorMode) {
-                Button(
-                    onClick = { viewModel.setEditorMode(false) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.85f)),
-                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
-                ) {
-                    Icon(Icons.Default.Close, null, tint = Color.White)
-                    Spacer(Modifier.width(6.dp))
-                    Text("SALIR EDITOR", color = Color.White, fontWeight = FontWeight.Bold)
+        // Render Right Eye
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = halfW.dp)
+                .graphicsLayer {
+                    translationX = lensConfig.ipd / 2f + lensConfig.rightOffsetX
+                    translationY = lensConfig.rightOffsetY
+                    scaleX = lensConfig.rightScaleX
+                    scaleY = lensConfig.rightScaleY
+                    rotationX = lensConfig.verticalRotation
+                    rotationY = lensConfig.horizontalRotation
+                    // Note: lensConfig.distortionIntensity is prepared for future integration with SpatialRenderer
                 }
+                .clip(RoundedCornerShape(0.dp))
+        ) {
+            Box(Modifier.fillMaxSize().width((vw / 2f).dp)) {
+                renderEyeContent(
+                    projections = projections,
+                    windows = windows,
+                    rayHit = rayHit,
+                    grabbedId = grabbedId,
+                    selectedId = selectedId,
+                    actualEditorMode = actualEditorMode,
+                    isMenuOpen = isMenuOpen,
+                    viewModel = viewModel
+                )
             }
         }
 
+        // Overlay elements that are not eye-specific (hands, notifications, menus, editor panel)
         if (handState.isDetected) {
             RenderHandSkeletons(vw, vh, handState, handStyle)
             val cursorX = handState.x * vw
@@ -388,94 +353,212 @@ fun VREnvironment(
         val activeHand = handState.hands.firstOrNull()
 
         AnimatedVisibility(
-    visible = isMenuGesture && activeHand != null,
-    enter = fadeIn(animationSpec = tween(300)) + 
-            scaleIn(initialScale = 0.8f, animationSpec = tween(300)),
-    exit = fadeOut(animationSpec = tween(200)) + 
-            scaleOut(targetScale = 0.8f, animationSpec = tween(200))
-) {
-
-    val anchorX = activeHand?.menuAnchorX ?: 0.5f
-    val anchorY = activeHand?.menuAnchorY ?: 0.5f
-
-    // Posición del centro del menú
-    val menuWidth = 150.dp
-    val menuHeight = 180.dp
-
-    val menuWidthPx = 150f
-    val menuHeightPx = 180f
-
-    val rawX = anchorX * vw
-    val rawY = anchorY * vh
-
-    // Mantener dentro de pantalla
-    val posX = (rawX - menuWidthPx / 2f)
-        .coerceIn(10f, vw - menuWidthPx - 10f)
-
-    val posY = (rawY - menuHeightPx / 2f)
-        .coerceIn(10f, vh - menuHeightPx - 10f)
-
-
-    Box(
-        modifier = Modifier
-            .offset(
-                x = posX.dp,
-                y = posY.dp
-            )
-            .zIndex(100f)
-            .width(menuWidth)
-            .height(menuHeight)
-            .background(
-                Color.Black.copy(alpha = 0.75f),
-                RoundedCornerShape(20.dp)
-            )
-            .border(
-                1.dp,
-                Color(0xFF00FFCC).copy(alpha = 0.8f),
-                RoundedCornerShape(20.dp)
-            )
-            .padding(12.dp)
-    ) {
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
+            visible = isMenuGesture && activeHand != null,
+            enter = fadeIn(animationSpec = tween(300)) +
+                    scaleIn(initialScale = 0.8f, animationSpec = tween(300)),
+            exit = fadeOut(animationSpec = tween(200)) +
+                    scaleOut(targetScale = 0.8f, animationSpec = tween(200))
         ) {
 
-            Text(
-                "VR MENU",
-                color = Color(0xFF00FFCC),
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
-            )
+            val anchorX = activeHand?.menuAnchorX ?: 0.5f
+            val anchorY = activeHand?.menuAnchorY ?: 0.5f
 
-            HorizontalDivider(
-                color = Color(0xFF00FFCC).copy(alpha = 0.3f)
-            )
+            // Posición del centro del menú
+            val menuWidth = 150.dp
+            val menuHeight = 180.dp
 
-            Text(
-                "🏠 Inicio",
-                color = Color.White,
-                fontSize = 12.sp
-            )
+            val menuWidthPx = 150f
+            val menuHeightPx = 180f
 
-            Text(
-                "⚙ Configuración",
-                color = Color.White,
-                fontSize = 12.sp
-            )
+            val rawX = anchorX * vw
+            val rawY = anchorY * vh
 
-            Text(
-                "✕ Cerrar",
-                color = Color.Red,
-                fontSize = 12.sp
-            )
-        }
-    }
+            // Mantener dentro de pantalla
+            val posX = (rawX - menuWidthPx / 2f)
+                .coerceIn(10f, vw - menuWidthPx - 10f)
+
+            val posY = (rawY - menuHeightPx / 2f)
+                .coerceIn(10f, vh - menuHeightPx - 10f)
+
+
+            Box(
+                modifier = Modifier
+                    .offset(
+                        x = posX.dp,
+                        y = posY.dp
+                    )
+                    .zIndex(100f)
+                    .width(menuWidth)
+                    .height(menuHeight)
+                    .background(
+                        Color.Black.copy(alpha = 0.75f),
+                        RoundedCornerShape(20.dp)
+                    )
+                    .border(
+                        1.dp,
+                        Color(0xFF00FFCC).copy(alpha = 0.8f),
+                        RoundedCornerShape(20.dp)
+                    )
+                    .padding(12.dp)
+            ) {
+
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        "VR MENU",
+                        color = Color(0xFF00FFCC),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+
+                    HorizontalDivider(
+                        color = Color(0xFF00FFCC).copy(alpha = 0.3f)
+                    )
+
+                    Text(
+                        "🏠 Inicio",
+                        color = Color.White,
+                        fontSize = 12.sp
+                    )
+
+                    Text(
+                        "⚙ Configuración",
+                        color = Color.White,
+                        fontSize = 12.sp
+                    )
+
+                    Text(
+                        "✕ Cerrar",
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+            }
         } // Box del menú
+
+        if (actualEditorMode) {
+            EditorControlPanel(
+                viewModel = viewModel,
+                selectedWindow = windows[selectedId],
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 40.dp)
+            )
+            if (!forceEditorMode) {
+                Button(
+                    onClick = { viewModel.setEditorMode(false) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.85f)),
+                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
+                ) {
+                    Icon(Icons.Default.Close, null, tint = Color.White)
+                    Spacer(Modifier.width(6.dp))
+                    Text("SALIR EDITOR", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     } // Box principal
 } // VREnvironment
+
+@Composable
+private fun renderEyeContent(
+    projections: List<WindowProjection>,
+    windows: Map<String, VRWindowConfig>,
+    rayHit: SpatialRenderer.RaycastResult?,
+    grabbedId: String?,
+    selectedId: String?,
+    actualEditorMode: Boolean,
+    isMenuOpen: Boolean,
+    viewModel: VRViewModel
+) {
+    projections.forEach { proj ->
+        val win = windows[proj.windowId] ?: return@forEach
+        val isHovered = rayHit?.windowId == proj.windowId
+        val isGrabbed = grabbedId == proj.windowId
+        val isSelected = selectedId == proj.windowId
+
+        val borderColor = when {
+            isSelected && actualEditorMode -> Color(0xFFFFAA00)
+            isGrabbed -> Color(0xFF00FFCC)
+            isHovered -> Color(0xFF00FFCC).copy(alpha = 0.6f)
+            else -> Color.White.copy(alpha = 0.1f)
+        }
+        val borderWidth = when {
+            isSelected && actualEditorMode -> 3.dp
+            isGrabbed -> 2.dp
+            isHovered -> 1.5.dp
+            else -> 1.dp
+        }
+
+        if (proj.windowId == "universal_dock") {
+            UniversalDock(
+                viewModel = viewModel,
+                isMenuOpen = isMenuOpen,
+                theme = "glassmorphic",
+                modifier = Modifier
+                    .zIndex(10f)
+                    .offset(
+                        x = (proj.centerX - proj.widthPx / 2f).coerceAtLeast(0f).dp,
+                        y = (proj.centerY - proj.heightPx / 2f).coerceAtLeast(0f).dp
+                    )
+                    .size(
+                        proj.widthPx.coerceIn(280f, 900f).dp,
+                        proj.heightPx.coerceIn(160f, 600f).dp
+                    )
+                    .graphicsLayer {
+                        shadowElevation = (20f / proj.distance).coerceIn(2f, 20f)
+                    }
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .offset(
+                        x = (proj.centerX - proj.widthPx / 2f).coerceAtLeast(0f).dp,
+                        y = (proj.centerY - proj.heightPx / 2f).coerceAtLeast(0f).dp
+                    )
+                    .size(
+                        proj.widthPx.coerceIn(280f, 900f).dp,
+                        proj.heightPx.coerceIn(160f, 600f).dp
+                    )
+                    .graphicsLayer {
+                        shadowElevation = (20f / proj.distance).coerceIn(2f, 20f)
+                    }
+                    .background(
+                        Color.Black.copy(alpha = 0.85f * win.brightness),
+                        RoundedCornerShape(16.dp)
+                    )
+                    .border(
+                        width = borderWidth,
+                        color = borderColor,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    WindowTitleBar(
+                        title = win.title,
+                        isPinned = win.isPinned,
+                        isHovered = isHovered,
+                        onClose = { /*if (!actualEditorMode) viewModel.closeWindow(win.id)*/ }
+                    )
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .graphicsLayer { alpha = win.brightness }
+                    ) {
+                        VRWindowContent(
+                            id = win.internalId.ifEmpty { win.id },
+                            viewModel = viewModel
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun EditorControlPanel(

@@ -16,7 +16,6 @@ import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
-import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.ByteArrayOutputStream
@@ -47,7 +46,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
 
     private val TAG = "HandTracker"
 
-    // CONTRATO: GestureType debe contener exactamente estos valores
     enum class GestureType {
         NONE,
         OPEN_HAND,
@@ -57,7 +55,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
         MENU
     }
 
-    // CONTRATO: HandState debe contener exactamente estas propiedades
     data class HandState(
         val isDetected: Boolean = false,
         val x: Float = 0.5f,
@@ -76,7 +73,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
     @Volatile private var latestSensorH = 0
     @Volatile private var latestRotation = 0
 
-    // Suavizado (interpolación) para evitar vibraciones
     private val smoothingAlpha = 0.75f 
     private val leftJointsBuffer = FloatArray(63)
     private val rightJointsBuffer = FloatArray(63)
@@ -92,8 +88,12 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
 
     @Volatile private var isProcessing = false
 
+    // Optimización: Buffers reutilizables para evitar GC pauses en el hilo de CameraX
+    private var nv21Buffer: ByteArray? = null
+    private var byteArrayOutputStream: ByteArrayOutputStream? = null
+
     // ========================================================================
-    // MATEMÁTICAS 3D REUTILIZABLES (Para orientación y gestos invariantes)
+    // MATEMÁTICAS 3D REUTILIZABLES
     // ========================================================================
     
     data class Vec3(val x: Float, val y: Float, val z: Float) {
@@ -135,7 +135,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
         fun update(detected: GestureType, now: Long): GestureType {
             if (detected != GestureType.NONE) {
                 if (detected == rawGesture) {
-                    // Mantener durante 150 ms antes de activarse
                     if (now - rawGestureStartMs >= 150L) {
                         activeGesture = detected
                     }
@@ -143,9 +142,8 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
                     rawGesture = detected
                     rawGestureStartMs = now
                 }
-                gestureLostMs = 0L // Resetear tiempo de pérdida si se detecta algo
+                gestureLostMs = 0L
             } else {
-                // Debe mantenerse perdido durante 100 ms antes de desactivarse
                 if (activeGesture != GestureType.NONE) {
                     if (gestureLostMs == 0L) gestureLostMs = now
                     if (now - gestureLostMs >= 100L) {
@@ -156,7 +154,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
                 }
             }
             
-            // Si el gesto detectado coincide con el activo, estabilizamos
             if (detected == activeGesture) {
                 gestureLostMs = 0L
             }
@@ -208,7 +205,7 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
     }
 
     // ========================================================================
-    // ANÁLISIS DE IMAGEN
+    // ANÁLISIS DE IMAGEN (Optimizado para no bloquear UI)
     // ========================================================================
 
     @OptIn(ExperimentalGetImage::class)
@@ -230,7 +227,7 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
         latestRotation = image.imageInfo.rotationDegrees
 
         try {
-            val bitmap = image.toBitmapSafe()
+            val bitmap = image.toBitmapOptimized()
             val mpImage = BitmapImageBuilder(bitmap).build()
             landmarker.detectAsync(mpImage, System.currentTimeMillis())
         } catch (e: Exception) {
@@ -254,7 +251,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             hasPrevRight = false
             isHandCurrentlyDetected = false
             
-            // Alimentar NONE a la histéresis para manejar la desactivación retardada
             val stableGesture = hysteresis.update(GestureType.NONE, now)
             
             _handState.value = HandState(
@@ -281,7 +277,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             val prevBuffer = if (isLeft) prevLeftJoints else prevRightJoints
             val hasPrev = if (isLeft) hasPrevLeft else hasPrevRight
 
-            // 1. Suavizado de joints (interpolación)
             for (j in 0 until 21) {
                 val lm = handLandmarks[j]
                 val idx = j * 3
@@ -298,25 +293,21 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             if (isLeft) hasPrevLeft = true else hasPrevRight = true
             currentBuffer.copyInto(prevBuffer)
 
-            // 2. Conversión a Vec3 para matemáticas 3D robustas
             val landmarks3D = (0 until 21).map { 
                 val idx = it * 3
                 Vec3(currentBuffer[idx], currentBuffer[idx + 1], currentBuffer[idx + 2])
             }
 
-            // 3. Detección de gestos usando orientación de la palma y vectores 3D
             val gestureResult = detectGesture3D(landmarks3D)
             val rawGesture = gestureResult.first
             val pinchVal = gestureResult.second
 
-            // 4. Aplicar histéresis al gesto de la mano primaria (la primera detectada)
             val stableGesture = if (i == 0) {
                 hysteresis.update(rawGesture, now)
             } else {
-                rawGesture // Para manos secundarias, usamos el gesto crudo o podríamos tener otra histéresis
+                rawGesture
             }
 
-            // 5. Cálculo de posición y anclaje del menú
             var menuVisible = false
             var menuAnchorX = 0f
             var menuAnchorY = 0f
@@ -324,7 +315,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
 
             if (stableGesture == GestureType.MENU) {
                 menuVisible = true
-                // Punto medio entre Landmark 4 (pulgar) y Landmark 8 (índice)
                 val lm4 = landmarks3D[4]
                 val lm8 = landmarks3D[8]
                 menuAnchorX = (lm4.x + lm8.x) / 2f
@@ -332,7 +322,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
                 menuAnchorZ = (lm4.z + lm8.z) / 2f
             }
 
-            // 6. Mapeo de coordenadas a pantalla
             val targetIdx = if (stableGesture == GestureType.PINCH || stableGesture == GestureType.MENU) -1 else 8
             var finalX: Float
             var finalY: Float
@@ -347,7 +336,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
 
             val mapped = mapCoordsFast(finalX, finalY, latestSensorW, latestSensorH, latestRotation, screenW, screenH)
             
-            // Suavizado de la posición final para evitar vibraciones
             val smoothX = if (!isHandCurrentlyDetected) mapped.first else smoothingAlpha * mapped.first + (1f - smoothingAlpha) * prevSmoothX
             val smoothY = if (!isHandCurrentlyDetected) mapped.second else smoothingAlpha * mapped.second + (1f - smoothingAlpha) * prevSmoothY
             prevSmoothX = smoothX
@@ -378,7 +366,6 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             }
         }
 
-        // 7. Actualizar estado global
         val primary = primaryHandData ?: HandData(
             isLeft = false,
             joints = emptyList(),
@@ -403,19 +390,16 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
     }
 
     // ========================================================================
-    // LÓGICA DE GESTOS 3D (Invatante a rotación y ángulo de visión)
+    // LÓGICA DE GESTOS 3D
     // ========================================================================
 
     private fun detectGesture3D(l: List<Vec3>): Pair<GestureType, Float> {
         val wrist = l[0]
         
-        // Orientación de la palma: normal al plano formado por muñeca, MCP índice (5), MCP meñique (17)
-        // Esto establece un sistema de coordenadas local relativo a la mano, no a la pantalla.
         val vWristToIndexMcp = l[5] - wrist
         val vWristToPinkyMcp = l[17] - wrist
         val palmNormal = vWristToIndexMcp.cross(vWristToPinkyMcp).normalize()
 
-        // Función reutilizable para verificar extensión de un dedo usando geometría 3D
         fun isExtended(mcpIdx: Int, tipIdx: Int): Boolean {
             val vMcp = l[mcpIdx] - wrist
             val vTip = l[tipIdx] - wrist
@@ -424,24 +408,16 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             
             if (lenMcp < 1e-5f) return false
             
-            // El producto punto entre los vectores normalizados nos da el coseno del ángulo.
-            // Si el dedo está extendido, apunta en la misma dirección general que el vector hacia el MCP.
             val dot = vMcp.normalize().dot(vTip.normalize())
-            
-            // Criterios robustos invariantes a la rotación:
-            // 1. La punta está significativamente más lejos de la muñeca que el MCP.
-            // 2. El ángulo entre el vector del MCP y el de la punta es menor a ~60 grados (cos > 0.5).
             return lenTip > lenMcp * 1.15f && dot > 0.5f
         }
 
-        // Evaluación de cada dedo
         val thumbExt = isExtended(2, 4)
         val indexExt = isExtended(5, 8)
         val middleExt = isExtended(9, 12)
         val ringExt = isExtended(13, 16)
         val pinkyExt = isExtended(17, 20)
 
-        // Cálculo de fuerza de pellizco (PINCH)
         val distThumbIndex = (l[4] - l[8]).length()
         val pinchStrength = (1f - (distThumbIndex - 0.02f) / 0.08f).coerceIn(0f, 1f)
         val isPinch = distThumbIndex < 0.06f
@@ -450,23 +426,18 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
             return Pair(GestureType.PINCH, pinchStrength)
         }
 
-        // GESTO MENU (Pistola): Pulgar e índice extendidos, medio, anular y meñique doblados.
-        // Al usar vectores relativos a la muñeca y la normal de la palma, esto funciona desde cualquier ángulo visible.
         if (thumbExt && indexExt && !middleExt && !ringExt && !pinkyExt) {
             return Pair(GestureType.MENU, 0f)
         }
 
-        // POINTING: Solo índice extendido
         if (indexExt && !middleExt && !ringExt && !pinkyExt) {
             return Pair(GestureType.POINTING, 0f)
         }
 
-        // CLOSED_HAND: Ningún dedo extendido
         if (!thumbExt && !indexExt && !middleExt && !ringExt && !pinkyExt) {
             return Pair(GestureType.CLOSED_HAND, 0f)
         }
 
-        // OPEN_HAND: Todos los dedos principales extendidos
         if (indexExt && middleExt && ringExt && pinkyExt) {
             return Pair(GestureType.OPEN_HAND, 0f)
         }
@@ -475,7 +446,7 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
     }
 
     // ========================================================================
-    // UTILIDADES
+    // UTILIDADES OPTIMIZADAS
     // ========================================================================
 
     private fun mapCoordsFast(sx: Float, sy: Float, sW: Int, sH: Int, rot: Int, scW: Float, scH: Float): Pair<Float, Float> {
@@ -511,33 +482,41 @@ class HandTracker(private val context: Context) : ImageAnalysis.Analyzer {
         return Pair(px.coerceIn(0f, 1f), py.coerceIn(0f, 1f))
     }
 
-    private fun ImageProxy.toBitmapSafe(): Bitmap {
-        if (format == ImageFormat.YUV_420_888) {
-            val yBuffer = planes[0].buffer.duplicate().apply { rewind() }
-            val uBuffer = planes[1].buffer.duplicate().apply { rewind() }
-            val vBuffer = planes[2].buffer.duplicate().apply { rewind() }
+    @OptIn(ExperimentalGetImage::class)
+    private fun ImageProxy.toBitmapOptimized(): Bitmap {
+        val yBuffer = planes[0].buffer
+        val uBuffer = planes[1].buffer
+        val vBuffer = planes[2].buffer
 
-            val ySize = yBuffer.remaining()
-            val uSize = uBuffer.remaining()
-            val vSize = vBuffer.remaining()
+        val ySize = yBuffer.remaining()
+        val uSize = uBuffer.remaining()
+        val vSize = vBuffer.remaining()
+        val totalSize = ySize + uSize + vSize
 
-            val nv21 = ByteArray(ySize + uSize + vSize)
-            yBuffer.get(nv21, 0, ySize)
-            vBuffer.get(nv21, ySize, vSize)
-            uBuffer.get(nv21, ySize + vSize, uSize)
-
-            val yuvImage = YuvImage(nv21, ImageFormat.NV21, this.width, this.height, null)
-            val out = ByteArrayOutputStream()
-            yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 100, out)
-            val imageBytes = out.toByteArray()
-            
-            return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size) 
-                ?: throw IllegalStateException("No se pudo decodificar Bitmap")
-        } else {
-            val bitmapBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val buffer = planes[0].buffer.duplicate().apply { rewind() }
-            bitmapBuffer.copyPixelsFromBuffer(buffer)
-            return bitmapBuffer
+        var nv21 = nv21Buffer
+        if (nv21 == null || nv21.size != totalSize) {
+            nv21 = ByteArray(totalSize)
+            nv21Buffer = nv21
         }
+
+        yBuffer.get(nv21, 0, ySize)
+        vBuffer.get(nv21, ySize, vSize)
+        uBuffer.get(nv21, ySize + vSize, uSize)
+
+        var out = byteArrayOutputStream
+        if (out == null) {
+            out = ByteArrayOutputStream(totalSize / 2)
+            byteArrayOutputStream = out
+        } else {
+            out.reset()
+        }
+
+        val yuvImage = YuvImage(nv21, ImageFormat.NV21, this.width, this.height, null)
+        // 75% de calidad ofrece el mejor equilibrio entre rendimiento y precisión para MediaPipe
+        yuvImage.compressToJpeg(Rect(0, 0, this.width, this.height), 75, out)
+
+        val imageBytes = out.toByteArray()
+        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size) 
+            ?: throw IllegalStateException("No se pudo decodificar Bitmap")
     }
 }
